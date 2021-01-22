@@ -593,20 +593,18 @@ func (n *linuxNodeHandler) insertNeighbor(ctx context.Context, newNode *nodeType
 		return
 	}
 
+	scopedLog := log.WithField(logfields.Interface, ifaceName)
+
 	newNodeIP := newNode.GetNodeIP(false).To4()
 	nextHopIPv4 := make(net.IP, len(newNodeIP))
 	copy(nextHopIPv4, newNodeIP)
-
-	scopedLog := log.WithFields(logrus.Fields{
-		logfields.Interface: ifaceName,
-		logfields.IPAddr:    nextHopIPv4,
-	})
-
 	srcIPv4, nextHopIPv4, err := n.getSrcAndNextHopIPv4(nextHopIPv4, ifaceName)
 	if err != nil {
 		scopedLog.WithError(err).Error("Failed to determine source and next hop ip for arping")
 		return
 	}
+
+	scopedLog = scopedLog.WithField(logfields.IPAddr, nextHopIPv4)
 
 	nextHopStr := nextHopIPv4.String()
 	if existingNextHopStr, found := n.neighNextHopByNode[newNode.Identity()]; found {
